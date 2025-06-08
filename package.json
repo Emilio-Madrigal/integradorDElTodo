@@ -1,0 +1,17 @@
+{
+  "name": "rgb",
+  "version": "1.0.0",
+  "description": "conexcion de arduino a html via node",
+  "main": "jscolor.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "author": "emilio",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "nodemon": "^3.1.9",
+    "serialport": "^13.0.0"
+  },
+  "keywords": []
+}
