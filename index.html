@@ -123,66 +123,69 @@
   </div>
 
 <script>
-  const ipESP = "http://192.168.100.86"; // Ccambia esta ip por la que da en tu casa
-
-  function actualizarYEnviar() {
-    document.getElementById("img-foco").src = foco.checked ? "img/bulb on.webp" : "img/off.png";
-    document.getElementById("img-bomba").src = bomba.checked ? "img/bomba on.png" : "img/bomba off.png";
-    document.getElementById("img-fan").src = fan.checked ? "img/fan on.gif" : "img/fan off2.png";
-
-    const datos = {
-  foco: document.getElementById("interruptor-foco").checked ? "ON" : "OFF",
-  bomba: document.getElementById("interruptor-bomba").checked ? "ON" : "OFF",
-  ventilador: document.getElementById("interruptor-ventilador").checked ? "ON" : "OFF"
-};
-
-// Construir URL con parámetros GET
-const params = new URLSearchParams(datos).toString();
-const url = ipESP + "/datos?" + params;
-
-fetch(url)
-  .then(response => response.text())
-  .then(data => {
-    console.log("Respuesta del ESP:", data);
-  })
-  .catch(error => console.error(error));
-
-  }
+  const ipESP = "http://192.168.1.100"; // Cambia esta IP por la correcta de tu ESP32
 
   const foco = document.getElementById("switch-foco");
   const bomba = document.getElementById("switch-bomba");
   const fan = document.getElementById("switch-fan");
 
+  function actualizarYEnviar() {
+    // Actualiza imágenes según estado
+    document.getElementById("img-foco").src = foco.checked ? "img/bulb on.webp" : "img/off.png";
+    document.getElementById("img-bomba").src = bomba.checked ? "img/bomba on.png" : "img/bomba off.png";
+    document.getElementById("img-fan").src = fan.checked ? "img/fan on.gif" : "img/fan off2.png";
+
+    // Datos a enviar
+    const datos = {
+      foco: foco.checked ? "ON" : "OFF",
+      bomba: bomba.checked ? "ON" : "OFF",
+      ventilador: fan.checked ? "ON" : "OFF",
+      temperaturaDeseada: document.getElementById("temp-deseada").value || 0,
+      humedadDeseada: document.getElementById("humedad-deseada").value || 0
+    };
+
+    // Enviar datos con POST
+    fetch(ipESP + "/datos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
+    })
+    .then(res => res.text())
+    .then(msg => console.log("ESP responde:", msg))
+    .catch(err => console.error("Error al enviar:", err));
+  }
+
+  // Actualiza los sensores desde ESP32 y muestra en pantalla
+  function actualizarSensores() {
+    fetch(ipESP + "/sensores")
+      .then(res => res.json())
+      .then(data => {
+        // Asumiendo que el JSON tiene keys temperatura y humedad
+        document.getElementById("temp").textContent = data.temperatura + " °C";
+        document.getElementById("humedad").textContent = data.humedad + " %";
+      })
+      .catch(err => {
+        console.error("Error al obtener sensores:", err);
+        document.getElementById("temp").textContent = "Error";
+        document.getElementById("humedad").textContent = "Error";
+      });
+  }
+
+  // Eventos para cuando cambian los interruptores
   foco.addEventListener("change", actualizarYEnviar);
   bomba.addEventListener("change", actualizarYEnviar);
   fan.addEventListener("change", actualizarYEnviar);
 
+  // Botón para enviar valores deseados
   function enviarDatos() {
     actualizarYEnviar();
   }
 
-function actualizarSensores() {
-  fetch(ipESP + "/sensores")
-    .then(response => response.json())
-    .then(data => {
-      // Mostrar en el HTML
-      document.getElementById("temp_aire").innerText = data.temp_aire + " °C";
-      document.getElementById("hum_aire").innerText = data.hum_aire + " %";
-      document.getElementById("hum_suelo").innerText = data.hum_suelo + " %";
-    })
-    .catch(error => {
-      console.error("Error al obtener datos de sensores:", error);
-      // Mostrar error en el HTML
-      document.getElementById("temp_aire").innerText = "Error";
-      document.getElementById("hum_aire").innerText = "Error";
-      document.getElementById("hum_suelo").innerText = "Error";
-    });
-}
-
-// Actualizar cada 5 segundos
-setInterval(actualizarSensores, 3000);
-actualizarSensores();
+  // Actualizar sensores cada 3 segundos
+  setInterval(actualizarSensores, 3000);
+  actualizarSensores();
 </script>
+
 
 </body>
 </html>
