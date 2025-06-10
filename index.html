@@ -131,21 +131,22 @@
     document.getElementById("img-fan").src = fan.checked ? "img/fan on.gif" : "img/fan off2.png";
 
     const datos = {
-      foco: foco.checked ? "ON" : "OFF",
-      bomba: bomba.checked ? "ON" : "OFF",
-      ventilador: fan.checked ? "ON" : "OFF",
-      temperaturaDeseada: document.getElementById("temp-deseada").value,
-      humedadDeseada: document.getElementById("humedad-deseada").value
-    };
+  foco: document.getElementById("interruptor-foco").checked ? "ON" : "OFF",
+  bomba: document.getElementById("interruptor-bomba").checked ? "ON" : "OFF",
+  ventilador: document.getElementById("interruptor-ventilador").checked ? "ON" : "OFF"
+};
 
-    fetch(ipESP + "/datos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos)
-    })
-    .then(res => res.text())
-    .then(msg => console.log("ESP responde:", msg))
-    .catch(err => console.error("Error al enviar:", err));
+// Construir URL con parámetros GET
+const params = new URLSearchParams(datos).toString();
+const url = ipESP + "/datos?" + params;
+
+fetch(url)
+  .then(response => response.text())
+  .then(data => {
+    console.log("Respuesta del ESP:", data);
+  })
+  .catch(error => console.error(error));
+
   }
 
   const foco = document.getElementById("switch-foco");
@@ -160,17 +161,27 @@
     actualizarYEnviar();
   }
 
-  function actualizarSensores() {
-    fetch(ipESP + "/sensores")
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("temp").textContent = data.temperatura + " °C";
-        document.getElementById("humedad").textContent = data.humedad + " %";
-      })
-      .catch(err => console.error("Error al obtener sensores:", err));
-  }
+function actualizarSensores() {
+  fetch(ipESP + "/sensores")
+    .then(response => response.json())
+    .then(data => {
+      // Mostrar en el HTML
+      document.getElementById("temp_aire").innerText = data.temp_aire + " °C";
+      document.getElementById("hum_aire").innerText = data.hum_aire + " %";
+      document.getElementById("hum_suelo").innerText = data.hum_suelo + " %";
+    })
+    .catch(error => {
+      console.error("Error al obtener datos de sensores:", error);
+      // Mostrar error en el HTML
+      document.getElementById("temp_aire").innerText = "Error";
+      document.getElementById("hum_aire").innerText = "Error";
+      document.getElementById("hum_suelo").innerText = "Error";
+    });
+}
 
-  setInterval(actualizarSensores, 2000); 
+// Actualizar cada 5 segundos
+setInterval(actualizarSensores, 3000);
+actualizarSensores();
 </script>
 
 </body>
