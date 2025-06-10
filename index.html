@@ -68,8 +68,12 @@
         <p id="temp" class="text-3xl">-- °C</p>
       </div>
       <div class="bg-white p-6 rounded-2xl shadow text-center">
-        <h2 class="text-xl font-semibold mb-2">Humedad</h2>
-        <p id="humedad" class="text-3xl">-- %</p>
+        <h2 class="text-xl font-semibold mb-2">Humedad del suelo</h2>
+        <p id="humedad_suelo" class="text-3xl">-- %</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl shadow text-center">
+        <h2 class="text-xl font-semibold mb-2">Humedad ambiental</h2>
+        <p id="humedad_aire" class="text-3xl">-- %</p>
       </div>
     </div>
 
@@ -81,7 +85,7 @@
         <img id="img-foco" src="img/off.png" class="mx-auto h-24" alt="Foco" />
         <p class="mt-2 font-medium">Foco</p>
         <label class="switch mt-4">
-          <input type="checkbox" id="switch-foco" onchange="toggleFoco()">
+          <input type="checkbox" id="switch-foco" onchange="actualizarYEnviar(this)">
           <span class="slider"></span>
         </label>
       </div>
@@ -91,7 +95,7 @@
         <img id="img-bomba" src="img/bomba off.png" class="mx-auto h-24" alt="Bomba" />
         <p class="mt-2 font-medium">Bomba</p>
         <label class="switch mt-4">
-          <input type="checkbox" id="switch-bomba" onchange="toggleBomba()">
+          <input type="checkbox" id="switch-bomba" onchange="actualizarYEnviar(this)">
           <span class="slider"></span>
         </label>
       </div>
@@ -101,7 +105,7 @@
         <img id="img-fan" src="img/fan off2.png" class="mx-auto h-24" alt="Ventilador 1" />
         <p class="mt-2 font-medium">Ventilador</p>
         <label class="switch mt-4">
-          <input type="checkbox" id="switch-fan" onchange="toggleFan1()">
+          <input type="checkbox" id="switch-fan" onchange="actualizarYEnviar(this)">
           <span class="slider"></span>
         </label>
       </div>
@@ -123,37 +127,28 @@
   </div>
 
 <script>
-  const ipESP = "http://192.168.1.100"; // Cambia esta IP por la correcta de tu ESP32
+  const ipESP = "http://192.168.100.86"; // Cambia esta IP por la correcta de tu ESP32
 
   const foco = document.getElementById("switch-foco");
   const bomba = document.getElementById("switch-bomba");
   const fan = document.getElementById("switch-fan");
 
-  function actualizarYEnviar() {
-    // Actualiza imágenes según estado
-    document.getElementById("img-foco").src = foco.checked ? "img/bulb on.webp" : "img/off.png";
-    document.getElementById("img-bomba").src = bomba.checked ? "img/bomba on.png" : "img/bomba off.png";
-    document.getElementById("img-fan").src = fan.checked ? "img/fan on.gif" : "img/fan off2.png";
+  function actualizarYEnviar(elemento) {
+  const actuador = elemento.id;
+  const estado = elemento.checked ? 1 : 0;
 
-    // Datos a enviar
-    const datos = {
-      foco: foco.checked ? "ON" : "OFF",
-      bomba: bomba.checked ? "ON" : "OFF",
-      ventilador: fan.checked ? "ON" : "OFF",
-      temperaturaDeseada: document.getElementById("temp-deseada").value || 0,
-      humedadDeseada: document.getElementById("humedad-deseada").value || 0
-    };
-
-    // Enviar datos con POST
-    fetch(ipESP + "/datos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos)
+  fetch(ipESP + "/datos?"+ actuador + "=" + estado)
+    .then(res => {
+      if (!res.ok) throw new Error("Respuesta no OK");
+      return res.text();
     })
-    .then(res => res.text())
-    .then(msg => console.log("ESP responde:", msg))
-    .catch(err => console.error("Error al enviar:", err));
-  }
+    .then(data => {
+      console.log("Respuesta del ESP:", data);
+    })
+    .catch(err => {
+      console.error("Error al enviar:", err);
+    });
+}
 
   // Actualiza los sensores desde ESP32 y muestra en pantalla
   function actualizarSensores() {
@@ -162,12 +157,14 @@
       .then(data => {
         // Asumiendo que el JSON tiene keys temperatura y humedad
         document.getElementById("temp").textContent = data.temperatura + " °C";
-        document.getElementById("humedad").textContent = data.humedad + " %";
+        document.getElementById("humedad_suelo").textContent = data.hum_suelo + " %";
+        document.getElementById("humedad_aire").textContent = data.hum_aire + " %";
       })
       .catch(err => {
         console.error("Error al obtener sensores:", err);
         document.getElementById("temp").textContent = "Error";
-        document.getElementById("humedad").textContent = "Error";
+        document.getElementById("humedad_suelo").textContent = "Error";
+        document.getElementById("humedad_aire").textContent = "Error";
       });
   }
 
