@@ -127,7 +127,7 @@
   </div>
 
 <script>
-  const ipESP = "http://192.168.100.86"; // Cambia esta IP por la correcta de tu ESP32
+  const ipESP = "http://192.168.55.133"; // Cambia esta IP por la correcta de tu ESP32
 
   const foco = document.getElementById("switch-foco");
   const bomba = document.getElementById("switch-bomba");
@@ -135,7 +135,7 @@
 
   function actualizarYEnviar(elemento) {
   const actuador = elemento.id;
-  const estado = elemento.checked ? 1 : 0;
+  const estado = elemento.checked ? 0 : 1;
 
   fetch(ipESP + "/datos?"+ actuador + "=" + estado)
     .then(res => {
